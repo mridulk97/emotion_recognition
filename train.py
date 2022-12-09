@@ -1,9 +1,17 @@
+import sys
+# sys.path.insert(0,'/content/gdrive/Shareddrives/AML Project/emotionflow/')
 from config import *
 from model import CRFModel
 
-speaker_vocab_dict_path = 'vocabs/speaker_vocab.pkl'
-emotion_vocab_dict_path = 'vocabs/emotion_vocab.pkl'
-sentiment_vocab_dict_path = 'vocabs/sentiment_vocab.pkl'
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+import os
+
+speaker_vocab_dict_path = 'vocabs_emorynlp/speaker_vocab.pkl'
+emotion_vocab_dict_path = 'vocabs_emorynlp/emotion_vocab.pkl'
+sentiment_vocab_dict_path = 'vocabs_emorynlp/sentiment_vocab.pkl'
 
 
 def pad_to_len(list_data, max_len, pad_value):
@@ -18,7 +26,6 @@ def get_vocabs(file_paths, addi_file_path):
     speaker_vocab = vocab.UnkVocab()
     emotion_vocab = vocab.Vocab()
     sentiment_vocab = vocab.Vocab()
-    # 保证neutral 在第0类
     emotion_vocab.word2index('neutral', train=True)
     # global speaker_vocab, emotion_vocab
     for file_path in file_paths:
@@ -32,6 +39,7 @@ def get_vocabs(file_paths, addi_file_path):
         for scene in additional_data.get(episode_id):
             for utterance in scene['utterances']:
                 speaker = utterance['speakers'][0].lower()
+                # speaker = 'chandler'
                 speaker_vocab.word2index(speaker, train=True)
     speaker_vocab = speaker_vocab.prune_by_count(1000)
     speakers = list(speaker_vocab.counts.keys())
@@ -65,8 +73,9 @@ def load_emorynlp_and_builddataset(file_path, train=False):
     for row in tqdm(data.iterrows(), desc='processing file {}'.format(file_path)):
         meta = row[1]
         utterance = meta['Utterance'].lower().replace(
-            '’', '\'').replace("\"", '')
+            '`', '\'').replace("\"", '')
         speaker = meta['Speaker'].lower()
+        # speaker = 'chandler'
         utterance = speaker + ' says:, ' + utterance
         emotion = meta['Emotion'].lower()
         dialogue_id = meta['Scene_ID']
@@ -165,8 +174,9 @@ def load_meld_and_builddataset(file_path, train=False):
     for row in tqdm(data.iterrows(), desc='processing file {}'.format(file_path)):
         meta = row[1]
         utterance = meta['Utterance'].replace(
-            '’', '\'').replace("\"", '')
+            '`', '\'').replace("\"", '')
         speaker = meta['Speaker']
+        # speaker = 'chandler'
         utterance = speaker + ' says:, ' + utterance
         emotion = meta['Emotion'].lower()
         dialogue_id = meta['Dialogue_ID']
@@ -276,7 +286,7 @@ def get_paramsgroup(model, warmup=False):
                 'weight_decay': weight_decay
             }
         )
-        # warmup的时候不考虑bert
+
         warmup_params.append(
             {
                 'params': param,
@@ -300,9 +310,10 @@ def train_epoch(model, optimizer, data, epoch_num=0, max_step=-1):
         sampler=sampler,
         num_workers=0  # multiprocessing.cpu_count()
     )
-    tq_train = tqdm(total=len(dataloader), position=1)
+    tq_train = tqdm(total=len(dataloader), position=0, leave=True)
     accumulation_steps = CONFIG['accumulation_steps']
 
+    step_losses = []
     for batch_id, batch_data in enumerate(dataloader):
         batch_data = [x.to(model.device()) for x in batch_data]
         sentences = batch_data[0]
@@ -313,15 +324,18 @@ def train_epoch(model, optimizer, data, epoch_num=0, max_step=-1):
         outputs = model(sentences, mask, speaker_ids, last_turns, emotion_idxs)
         loss = outputs
         # loss += loss_func(outputs[3], sentiment_idxs)
-        tq_train.set_description('loss is {:.2f}'.format(loss.item()))
+        # tq_train.set_description('loss is {:.2f}'.format(loss.item()))
         tq_train.update()
         loss = loss / accumulation_steps
         loss.backward()
         if batch_id % accumulation_steps == 0:
+            step_losses.append(loss.item())
+            tq_train.set_description('loss is {:.2f}'.format(loss.item()))
             optimizer.step()
             optimizer.zero_grad()
             # torch.cuda.empty_cache()
     tq_train.close()
+    return step_losses, np.mean(step_losses)
 
 
 def test(model, data):
@@ -338,7 +352,7 @@ def test(model, data):
         sampler=sampler,
         num_workers=0,  # multiprocessing.cpu_count()
     )
-    tq_test = tqdm(total=len(dataloader), desc="testing", position=2)
+    tq_test = tqdm(total=len(dataloader), desc="testing", position=0, leave=True)
     for batch_id, batch_data in enumerate(dataloader):
         batch_data = [x.to(model.device()) for x in batch_data]
         sentences = batch_data[0]
@@ -359,6 +373,8 @@ def test(model, data):
 
 
 def train(model, train_data_path, dev_data_path, test_data_path):
+    # result_save_path = os.path.join(os.getcwd(), '/' +  CONFIG['postfix'])
+    result_save_path = CONFIG['postfix']
     if CONFIG['task_name'] == 'meld':
         devset = load_meld_and_builddataset(dev_data_path)
         testset = load_meld_and_builddataset(test_data_path)
@@ -368,7 +384,6 @@ def train(model, train_data_path, dev_data_path, test_data_path):
         testset = load_emorynlp_and_builddataset(test_data_path)
         trainset = load_emorynlp_and_builddataset(train_data_path)
 
-
     # warmup
     optimizer = torch.optim.AdamW(get_paramsgroup(model, warmup=True))
     for epoch in range(CONFIG['wp']):
@@ -376,42 +391,95 @@ def train(model, train_data_path, dev_data_path, test_data_path):
         torch.cuda.empty_cache()
         f1 = test(model, devset)
         torch.cuda.empty_cache()
-        print('f1 on dev @ warmup epoch {} is {:.4f}'.format(
-            epoch, f1), flush=True)
+        print('f1 on dev @ warmup epoch {} is {:.4f}'.format(epoch, f1))
     # train
     optimizer = torch.optim.AdamW(get_paramsgroup(model))
     lr_scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=1, gamma=0.9)
     best_f1 = -1
     tq_epoch = tqdm(total=CONFIG['epochs'], position=0)
+    total_step_losses = [] 
+    epoch_losses = []
+    dev_f1s = []
+    test_f1s = []
     for epoch in range(CONFIG['epochs']):
         tq_epoch.set_description('training on epoch {}'.format(epoch))
         tq_epoch.update()
-        train_epoch(model, optimizer, trainset, epoch_num=epoch)
+        step_losses, epoch_loss = train_epoch(model, optimizer, trainset, epoch_num=epoch)
+        total_step_losses += step_losses
+        epoch_losses.append(epoch_loss)
         torch.cuda.empty_cache()
         f1 = test(model, devset)
+        dev_f1s.append(f1)
         torch.cuda.empty_cache()
-        print('f1 on dev @ epoch {} is {:.4f}'.format(epoch, f1), flush=True)
+        print('f1 on dev @ epoch {} is {:.4f}'.format(epoch, f1))
         # '''
         if f1 > best_f1:
             best_f1 = f1
             torch.save(model,
-                       'models/f1_{:.4f}_@epoch{}.pkl'
-                       .format(best_f1, epoch))
+                       os.path.join(result_save_path, CONFIG['postfix']+'f1_{:.4f}_@epoch{}.pkl'.format(best_f1, epoch)))
+            print('-'*25, result_save_path)
+            print('-'*25, 'Saving model', os.path.join(result_save_path, CONFIG['postfix']+'f1_{:.4f}_@epoch{}.pkl'.format(best_f1, epoch)))
         if lr_scheduler.get_last_lr()[0] > 1e-5:
             lr_scheduler.step()
         f1 = test(model, testset)
-        print('f1 on test @ epoch {} is {:.4f}'.format(epoch, f1), flush=True)
+        test_f1s.append(f1)
+        print('f1 on test @ epoch {} is {:.4f}'.format(epoch, f1))
         # f1 = test(model, test_on_trainset)
         # print('f1 on train @ epoch {} is {:.4f}'.format(epoch, f1), flush=True)
         # '''
+
+        plt.plot(dev_f1s)
+        plt.title('F1-dev_' + CONFIG['postfix'])
+        plt.savefig(os.path.join(result_save_path, 'F1-dev_' + CONFIG['postfix'] + '.png'))
+        # plt.show()
+        plt.clf()
+
+        plt.plot(test_f1s)
+        plt.title('F1-test_' + CONFIG['postfix'])
+        plt.savefig(os.path.join(result_save_path, 'F1-test_' + CONFIG['postfix'] + '.png'))
+        # plt.show()
+        plt.clf()
+
+        plt.plot(total_step_losses)
+        plt.title('Step losses_' + CONFIG['postfix'])
+        plt.savefig(os.path.join(result_save_path, 'Step losses_' + CONFIG['postfix'] + '.png'))
+        # plt.show()
+        plt.clf()
+
+        plt.plot(epoch_losses)
+        plt.title('Epoch losses_' + CONFIG['postfix'])
+        plt.savefig(os.path.join(result_save_path, 'Epoch losses_' + CONFIG['postfix'] + '.png'))
+        # plt.show()
+        plt.clf()
+
     tq_epoch.close()
-    lst = os.listdir('./models')
+
+    # lst = os.listdir('./models')
+    # lst = list(filter(lambda item: item.endswith('.pkl'), lst))
+    # lst.sort(key=lambda x: os.path.getmtime(os.path.join('models', x)))
+    # model = torch.load(os.path.join('models', lst[-1]))
+    # f1 = test(model, testset)
+    # print('best f1 on test is {:.4f}'.format(f1), flush=True)
+
+    lst = os.listdir('./' + result_save_path)
     lst = list(filter(lambda item: item.endswith('.pkl'), lst))
-    lst.sort(key=lambda x: os.path.getmtime(os.path.join('models', x)))
-    model = torch.load(os.path.join('models', lst[-1]))
-    f1 = test(model, testset)
-    print('best f1 on test is {:.4f}'.format(f1), flush=True)
+    lst.sort(key=lambda x: os.path.getmtime(os.path.join(result_save_path, x)))
+    best_model = torch.load(os.path.join(result_save_path, lst[-1]))
+    f1 = test(best_model, testset)
+    print('best f1 on test is {:.4f}'.format(f1))
+
+    torch.save(model, os.path.join(result_save_path, CONFIG['postfix']+'last_@epoch{}.pkl'.format(epoch)))
+
+    # plt.plot(total_step_losses)
+    # plt.title('Step losses' + CONFIG['postfix'])
+    # plt.savefig('Step losses' + CONFIG['postfix'] + '.png')
+    # plt.show()
+
+    # plt.plot(epoch_losses)
+    # plt.title('Epoch losses' + CONFIG['postfix'])
+    # plt.savefig('Epoch losses' + CONFIG['postfix'] + '.png')
+    # plt.show()
 
 
 if __name__ == '__main__':
@@ -449,6 +517,8 @@ if __name__ == '__main__':
                         default=CONFIG['data_path'], type=str, required=False)
     parser.add_argument('-acc_step', '--accumulation_steps',
                         default=CONFIG['accumulation_steps'], type=int, required=False)
+    parser.add_argument('-postfix', '--postfix',
+                        default='', type=str, required=False)
 
     args = parser.parse_args()
     CONFIG['data_path'] = args.data_path
@@ -462,6 +532,12 @@ if __name__ == '__main__':
     CONFIG['p_unk'] = args.p_unk
     CONFIG['accumulation_steps'] = args.accumulation_steps
     CONFIG['task_name'] = args.task_name
+    CONFIG['postfix'] = args.postfix
+
+    print('CONFIG', CONFIG)
+
+    os.makedirs(CONFIG['postfix'], exist_ok=True)
+
     train_data_path = os.path.join(CONFIG['data_path'], 'train_sent_emo.csv')
     test_data_path = os.path.join(CONFIG['data_path'], 'test_sent_emo.csv')
     dev_data_path = os.path.join(CONFIG['data_path'], 'dev_sent_emo.csv')
@@ -485,14 +561,14 @@ if __name__ == '__main__':
     model.to(device)
     print('---config---')
     for k, v in CONFIG.items():
-        print(k, '\t\t\t', v, flush=True)
+        print(k, '\t\t\t', v)
     if args.finetune:
         lst = os.listdir('./models')
         lst = list(filter(lambda item: item.endswith('.pkl'), lst))
         lst.sort(key=lambda x: os.path.getmtime(os.path.join('models', x)))
         model = torch.load(os.path.join('models', lst[-1]))
         print('checkpoint {} is loaded'.format(
-            os.path.join('models', lst[-1])), flush=True)
+            os.path.join('models', lst[-1])))
     if args.train:
         train(model, train_data_path, dev_data_path, test_data_path)
     if args.test:

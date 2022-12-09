@@ -1,4 +1,8 @@
-data/
+*epochs*
+*test*
+results/
+iemocap
+*.pyc
 __pycache__/
 .vscode/
 *.log
