@@ -56,22 +56,22 @@ data/
 #### Meld
 ------
 ```
-python train.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
+python train.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
 ```
 #### Emorynlp
 ------
 ```
-python train.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path -tsk emorynlp roberta-[base, large] -epochs [20, 5]
+python train.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path -tsk emorynlp roberta-[base, large] -epochs [20, 5]
 ```
 #### Iemocap
 ------
 ```
-python train_iemocap.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
+python train_iemocap.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
 ```
 #### Daily Dialog
 ------
 ```
-python train_dailydialog.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
+python train_dailydialog.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-[base, large] -epochs [20, 5]
 ```
 
 #### Without Speaker
