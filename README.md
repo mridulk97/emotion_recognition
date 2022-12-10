@@ -78,19 +78,14 @@ python train_dailydialog.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e
 -----
 Similarly for training without the speaker information the training scripts `train_meld_emorynlp_without_speaker.py` and `train_iemocap_without_speaker.py`.
 
-#### For Inference
+### For Inference
 ------
 ```
 python inference.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-base -epochs 2 -postfix iemocap_inf -tsk iemocap -ft
 ```
 
-#### Evaluation
-------
-```
-python train.py -te -ft -bsz 1 -dpt 0.3 -bert_path roberta-[base, large]
-```
 
-#### Results
+### Results
 ------
 
 | model                     | weighted-F1 | Checkpoint                                                   |
