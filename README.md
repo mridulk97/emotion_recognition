@@ -1,28 +1,44 @@
 ## EmotionFlow
 ------
-Source code for ICASSP2022 paper: EmotionFlow: Capture the Dialogue Level Emotion Transitions
+Sequential Emotion Recognition in Conversations
 
 ### Required Packages:
 ------
 transformers=4.14.1
-
 torch=1.8
-
 vocab=0.0.5
-
 numpy
-
 tqdm
-
 sklearn
-
 pickle
-
 pandas
 
-
-### Quick start:
+### Datasets:
 ------
+The Following datasets are available at `data/`
+```
+data
+└───meld
+│   │   dev_sent_emo.csv
+│   │   test_sent_emo.csv
+|   |   train_sent_emo.csv
+│   
+└───emorynlp
+│   │   emorynlp_dev_final.csv
+│   │   emorynlp_test_final.csv
+|   |   emorynlp_train_final.csv
+│   
+└───iemocap
+│   │   iemocap_dev.txt
+│   │   iemocap_test.txt
+|   |   iemocap_train.txt
+|
+└───daily_dialog
+│   │   dailydialog_dev.txt
+│   │   dailydialog_test.txt
+|   |   dailydialog_train.txt
+|
+```
 download MELD dataset from https://github.com/declare-lab/MELD/ and save to ./MELD
 
 #### Training
