@@ -80,7 +80,7 @@ Similarly for training without the speaker information the training scripts `tra
 
 ### For Inference
 ------
-Please run the following script on a GPU.
+Please download the `model checkpoint` from the link given below and keep it in this directory. Following script will run only on a GPU.
 ```
 python inference.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-base -epochs 2 -postfix iemocap_inf -tsk iemocap -ft
 ```

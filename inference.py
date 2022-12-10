@@ -723,7 +723,7 @@ if __name__ == '__main__':
     os.makedirs(CONFIG['postfix'], exist_ok=True)
 
     # train_data_path = os.path.join(CONFIG['data_path'], 'iemocap_train.txt')
-    test_data_path = os.path.join('data/iemocap_inf2.txt')
+    test_data_path = os.path.join('data/iemocap_inference.txt')
     # dev_data_path = os.path.join(CONFIG['data_path'], 'iemocap_dev.txt')
     if args.task_name =='emorynlp':
         train_data_path = os.path.join(CONFIG['data_path'], 'emorynlp_train_final.csv')
@@ -757,7 +757,7 @@ if __name__ == '__main__':
     if args.finetune:
         if args.task_name == 'iemocap':
             # model_path = r'/content/gdrive/Shareddrives/AML Project/iemocap-base-epochs=20-acc=2f1_0.6222_@epoch5.pkl'
-            model_path = r'checkpoints/iemocap-base-epochs=20-acc=2f1_0.6222_@epoch5.pkl'
+            model_path = r'iemocap-roberta-base.pkl'
         # lst = os.listdir('./models')
         # lst = list(filter(lambda item: item.endswith('.pkl'), lst))
         # lst.sort(key=lambda x: os.path.getmtime(os.path.join('models', x)))
