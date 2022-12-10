@@ -1,11 +1,11 @@
 *epochs*
 *test*
 results/
-iemocap
 *.pyc
 __pycache__/
 .vscode/
 *.log
+*vocabs*
 *.pkl
 models/
 MELD/

@@ -1,45 +1,55 @@
-## EmotionFlow
-------
-Sequential Emotion Recognition in Conversations
+
+# Sequential Emotion Recognition in Conversations
+
+FNU Hardeep, Harish Babu Manogaran, Mridul Khurana, Shri Sarvesh Venkatachala Moorthy and Upasana Sivaramakrishnan
+
+Fall 2022 CS 5824/ECE 5424 Advanced Machine Learning:  
+Course Project - Virginia Tech
 
 ### Required Packages:
 ------
 transformers=4.14.1
+
 torch=1.8
+
 vocab=0.0.5
+
 numpy
+
 tqdm
+
 sklearn
+
 pickle
+
 pandas
 
 ### Datasets:
 ------
 The Following datasets are available at `data/`
 ```
-data
-└───meld
+data/
+└───meld/
 │   │   dev_sent_emo.csv
 │   │   test_sent_emo.csv
 |   |   train_sent_emo.csv
 │   
-└───emorynlp
+└───emorynlp/
 │   │   emorynlp_dev_final.csv
 │   │   emorynlp_test_final.csv
 |   |   emorynlp_train_final.csv
 │   
-└───iemocap
+└───iemocap/
 │   │   iemocap_dev.txt
 │   │   iemocap_test.txt
 |   |   iemocap_train.txt
 |
-└───daily_dialog
+└───daily_dialog/
 │   │   dailydialog_dev.txt
 │   │   dailydialog_test.txt
 |   |   dailydialog_train.txt
 |
 ```
-download MELD dataset from https://github.com/declare-lab/MELD/ and save to ./MELD
 
 #### Training
 ------
