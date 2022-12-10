@@ -78,18 +78,23 @@ python train_dailydialog.py -tr -wp 0 -bsz 1 -acc_step [2, 8] -lr 1e-4 -ptmlr 1e
 -----
 Similarly for training without the speaker information the training scripts `train_meld_emorynlp_without_speaker.py` and `train_iemocap_without_speaker.py`.
 
+#### For Inference
+------
+```
+python inference.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -bert_path roberta-base -epochs 2 -postfix iemocap_inf -tsk iemocap -ft
+```
+
 #### Evaluation
 ------
 ```
 python train.py -te -ft -bsz 1 -dpt 0.3 -bert_path roberta-[base, large]
 ```
 
-<!-- #### Results
+#### Results
 ------
 
 | model                     | weighted-F1 | Checkpoint                                                   |
 | ------------------------- | ----------- | ------------------------------------------------------------ |
-| EmotionFlow-roberta-base  | 65.05       | [roberta-base-meld.pkl](https://drive.google.com/file/d/13tTwxFbfO2ZaNJfic3F2AGATzU6ilA5C/view?usp=sharing) |
-| EmotionFlow-roberta-large | 66.50       | [roberta-large-meld.pkl](https://drive.google.com/file/d/1zdS4SEvAzR5aVJ852zyaW4IzStQG6fvU/view?usp=sharing) | -->
+| Iemocap-roberta-base  | 65.05       | [iemocap-roberta-base.pkl](https://drive.google.com/file/d/154MIP5mUG7iwv0jhaN9iwfJ51wg8iU38/view?usp=sharing) |
 
 Checkpoints are produced on a single A100 GPU.
