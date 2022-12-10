@@ -86,11 +86,11 @@ python inference.py -tr -wp 0 -bsz 1 -acc_step 8 -lr 1e-4 -ptmlr 1e-5 -dpt 0.3 -
 ```
 
 
-### Results
+### Checkpoint
 ------
 
-| model                     | weighted-F1 | Checkpoint                                                   |
-| ------------------------- | ----------- | ------------------------------------------------------------ |
-| Iemocap-roberta-base  | 65.05       | [iemocap-roberta-base.pkl](https://drive.google.com/file/d/154MIP5mUG7iwv0jhaN9iwfJ51wg8iU38/view?usp=sharing) |
+| model                     | Checkpoint                                                   |
+| ------------------------- | ------------------------------------------------------------ |
+| Iemocap-roberta-base      | [iemocap-roberta-base.pkl](https://drive.google.com/file/d/154MIP5mUG7iwv0jhaN9iwfJ51wg8iU38/view?usp=sharing) |
 
 Checkpoints are produced on a single A100 GPU.
